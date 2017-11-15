@@ -3407,3 +3407,10 @@ if not EDX_PLATFORM_REVISION:
     except TypeError:
         # Not a git repository
         EDX_PLATFORM_REVISION = 'unknown'
+
+############## Settings for Entitlements API #######################
+ENTITLEMENTS_POLICY = {
+    'expiration_period_days': 450,
+    'refund_period_days': 60,
+    'regain_period_days': 14
+}

@@ -7,8 +7,8 @@ from rest_framework import permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 
 from entitlements.api.v1.filters import CourseEntitlementFilter
-from entitlements.models import CourseEntitlement
 from entitlements.api.v1.serializers import CourseEntitlementSerializer
+from entitlements.models import CourseEntitlement
 from student.models import CourseEnrollment
 
 log = logging.getLogger(__name__)
@@ -17,12 +17,14 @@ log = logging.getLogger(__name__)
 class EntitlementViewSet(viewsets.ModelViewSet):
     authentication_classes = (JwtAuthentication, SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
-    queryset = CourseEntitlement.objects.all().select_related('user')
     lookup_value_regex = '[0-9a-f-]+'
     lookup_field = 'uuid'
     serializer_class = CourseEntitlementSerializer
     filter_backends = (DjangoFilterBackend,)
     filter_class = CourseEntitlementFilter
+
+    def get_queryset(self):
+        return CourseEntitlement.objects.all().select_related('user')
 
     def perform_destroy(self, instance):
         """
