@@ -107,6 +107,14 @@ class SeatFactory(DictFactoryBase):
     upgrade_deadline = factory.LazyFunction(generate_zulu_datetime)
 
 
+class EntitlementFactory(DictFactoryBase):
+    currency = 'USD'
+    price = factory.Faker('random_int')
+    sku = factory.LazyFunction(generate_seat_sku)
+    mode = 'verified'
+    expires = None
+
+
 class CourseRunFactory(DictFactoryBase):
     eligible_for_financial_aid = True
     end = factory.LazyFunction(generate_zulu_datetime)
@@ -130,6 +138,7 @@ class CourseRunFactory(DictFactoryBase):
 
 class CourseFactory(DictFactoryBase):
     course_runs = factory.LazyFunction(partial(generate_instances, CourseRunFactory))
+    entitlements = factory.LazyFunction(partial(generate_instances, EntitlementFactory))
     image = ImageFactory()
     key = factory.LazyFunction(generate_course_key)
     owners = factory.LazyFunction(partial(generate_instances, OrganizationFactory, count=1))

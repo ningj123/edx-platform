@@ -16,6 +16,8 @@ from nose.plugins.attrib import attr
 from pytz import utc
 
 from course_modes.models import CourseMode
+from entitlements.models import CourseEntitlement
+from entitlements.tests.factories import CourseEntitlementFactory
 from lms.djangoapps.certificates.api import MODES
 from lms.djangoapps.commerce.tests.test_utils import update_commerce_config
 from lms.djangoapps.commerce.utils import EcommerceService
@@ -23,6 +25,7 @@ from lms.djangoapps.grades.tests.utils import mock_passing_grade
 from openedx.core.djangoapps.catalog.tests.factories import (
     CourseFactory,
     CourseRunFactory,
+    EntitlementFactory,
     ProgramFactory,
     SeatFactory,
     generate_course_run_key
@@ -37,6 +40,7 @@ from openedx.core.djangoapps.programs.utils import (
 )
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteFactory
 from openedx.core.djangolib.testing.utils import skip_unless_lms
+from student.models import CourseEnrollment
 from student.tests.factories import AnonymousUserFactory, CourseEnrollmentFactory, UserFactory
 from util.date_utils import strftime_localized
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -628,7 +632,7 @@ class TestProgramProgressMeter(TestCase):
             self.assertEqual(meter.progress(count_only=False), expected)
 
 
-def _create_course(self, course_price, course_run_count=1):
+def _create_course(self, course_price, course_run_count=1, entitlement_count=0):
     """
     Creates the course in mongo and update it with the instructor data.
     Also creates catalog course with respect to course run.
@@ -646,8 +650,9 @@ def _create_course(self, course_price, course_run_count=1):
 
         run = CourseRunFactory(key=unicode(course.id), seats=[SeatFactory(price=course_price)])
         course_runs.append(run)
+    entitlements = [EntitlementFactory() for x in range(entitlement_count)]
 
-    return CourseFactory(course_runs=course_runs)
+    return CourseFactory(course_runs=course_runs, entitlements=entitlements)
 
 
 @ddt.ddt
@@ -938,7 +943,7 @@ class TestProgramDataExtender(ModuleStoreTestCase):
             key=str(ModuleStoreCourseFactory().id),
             status='published'
         )
-        course = CourseFactory(course_runs=[course_run_1, course_run_2])
+        course = CourseFactory(course_runs=[course_run_1, course_run_2], entitlements=[])
         program = ProgramFactory(
             courses=[
                 CourseFactory(course_runs=[
@@ -966,6 +971,65 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         data = ProgramDataExtender(program, self.user).extend()
 
         self.assertTrue(data['is_learner_eligible_for_one_click_purchase'])
+
+    def test_learner_eligibility_for_one_click_purchase_entitlement_products(self):
+        """
+        Learner should be eligible for one click purchase if:
+            - program is eligible for one click purchase
+            - There are courses remaining that have not been purchased
+        """
+        course1 = _create_course(self, self.course_price, course_run_count=2, entitlement_count=1)
+        course2 = _create_course(self, self.course_price, course_run_count=2, entitlement_count=1)
+        expected_skus = set([course1['entitlements'][0]['sku'], course2['entitlements'][0]['sku']])
+        program = ProgramFactory(
+            courses=[course1, course2],
+            is_program_eligible_for_one_click_purchase=True,
+            applicable_seat_types=['verified'],
+        )
+        data = ProgramDataExtender(program, self.user).extend()
+        self.assertTrue(data['is_learner_eligible_for_one_click_purchase'])
+        self.assertEqual(set(data['skus']), expected_skus)
+
+    def test_learner_eligibility_for_one_click_purchase_user_entitlements(self):
+        course1 = _create_course(self, self.course_price, course_run_count=2)
+        course2 = _create_course(self, self.course_price, course_run_count=2, entitlement_count=1)
+        CourseEntitlementFactory(user=self.user, course_uuid=course1['uuid'], mode='verified')
+        expected_skus = set([course2['entitlements'][0]['sku']])
+        program = ProgramFactory(
+            courses=[course1, course2],
+            is_program_eligible_for_one_click_purchase=True,
+            applicable_seat_types=['verified'],
+        )
+        data = ProgramDataExtender(program, self.user).extend()
+        self.assertTrue(data['is_learner_eligible_for_one_click_purchase'])
+        self.assertEqual(set(data['skus']), expected_skus)
+
+    def test_all_courses_owned(self):
+        course1 = _create_course(self, self.course_price, course_run_count=2)
+        course2 = _create_course(self, self.course_price, course_run_count=2)
+        CourseEntitlementFactory(user=self.user, course_uuid=course1['uuid'], mode='verified')
+        CourseEntitlementFactory(user=self.user, course_uuid=course2['uuid'], mode='verified')
+        program = ProgramFactory(
+            courses=[course1, course2],
+            is_program_eligible_for_one_click_purchase=True,
+            applicable_seat_types=['verified'],
+        )
+        data = ProgramDataExtender(program, self.user).extend()
+        self.assertFalse(data['is_learner_eligible_for_one_click_purchase'])
+        self.assertEqual(data['skus'], [])
+
+    def test_entitlement_product_wrong_mode(self):
+        course1 = _create_course(self, self.course_price, entitlement_count=1)
+        course2 = _create_course(self, self.course_price)
+        expected_skus = set([course1['entitlements'][0]['sku'], course2['course_runs'][0]['seats'][0]['sku']])
+        program = ProgramFactory(
+            courses=[course1, course2],
+            is_program_eligible_for_one_click_purchase=True,
+            applicable_seat_types=['verified'],
+        )
+        data = ProgramDataExtender(program, self.user).extend()
+        self.assertTrue(data['is_learner_eligible_for_one_click_purchase'])
+        self.assertEqual(set(data['skus']), expected_skus)
 
 
 @skip_unless_lms
@@ -1212,8 +1276,11 @@ class TestProgramMarketingDataExtender(ModuleStoreTestCase):
             body=json.dumps(mock_discount_data),
             content_type='application/json'
         )
+        user = AnonymousUserFactory()
+        user.courseenrollment_set = CourseEnrollment.objects.none()
+        user.courseentitlement_set = CourseEntitlement.objects.none()
 
-        data = ProgramMarketingDataExtender(self.program, AnonymousUserFactory()).extend()
+        data = ProgramMarketingDataExtender(self.program, user).extend()
         self._update_discount_data(mock_discount_data)
 
         self.assertEqual(
