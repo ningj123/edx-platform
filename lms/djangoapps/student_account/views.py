@@ -327,6 +327,7 @@ def _third_party_auth_context(request, redirect_to, tpa_hint=None):
         "finishAuthUrl": None,
         "errorMessage": None,
         "registerFormSubmitButtonText": _("Create Account"),
+        "hideLoginLink": False,
     }
 
     if third_party_auth.is_enabled():
@@ -358,6 +359,7 @@ def _third_party_auth_context(request, redirect_to, tpa_hint=None):
             if current_provider is not None:
                 context["currentProvider"] = current_provider.name
                 context["finishAuthUrl"] = pipeline.get_complete_url(current_provider.backend_name)
+                context["hideLoginLink"] = current_provider.sync_learner_profile_data
 
                 if current_provider.skip_registration_form:
                     # For enterprise (and later for everyone), we need to get explicit consent to the
