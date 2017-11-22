@@ -100,6 +100,8 @@
             'string_utils': 'js/src/string_utils',
             'utility': 'js/src/utility',
             'draggabilly': 'js/vendor/draggabilly',
+            'popper': 'common/js/vendor/popper',
+            'bootstrap': 'common/js/vendor/bootstrap',
 
             // Files needed by OVA
             'annotator': 'js/vendor/ova/annotator-full',
@@ -123,9 +125,7 @@
             'tinymce': 'js/vendor/tinymce/js/tinymce/tinymce.full.min',
             'jquery.tinymce': 'js/vendor/tinymce/js/tinymce/jquery.tinymce.min',
             'picturefill': 'common/js/vendor/picturefill',
-            'hls': 'common/js/vendor/hls',
-            'popper': 'common/js/vendor/popper',
-            'bootstrap': 'common/js/vendor/bootstrap'
+            'hls': 'common/js/vendor/hls'
             // end of files needed by OVA
         },
         shim: {
@@ -171,10 +171,6 @@
                 deps: ['underscore'],
                 exports: 'interpolate_text'
             },
-            'bootstrap': {
-                deps: ['popper'],
-                exports: 'bootstrap'
-            },
             // Needed by OVA
             'video.dev': {
                 exports: 'videojs'
@@ -211,6 +207,10 @@
             },
             'grouping-annotator': {
                 deps: ['annotator']
+            },
+            'bootstrap': {
+                deps: ['jquery', 'popper'],
+                exports: 'bootstrap'
             },
             'ova': {
                 exports: 'ova',
