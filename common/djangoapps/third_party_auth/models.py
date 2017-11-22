@@ -181,6 +181,15 @@ class ProviderConfig(ConfigurationModel):
             "immediately after authenticating with the third party instead of the login page."
         ),
     )
+
+    sync_learner_profile_data = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Enforce a learner's edX profile data to synchronize with data received from the "
+            "provider, in all SSO scenarios. The learner will always be notified if the email changes."
+        )
+    )
+
     prefix = None  # used for provider_id. Set to a string value in subclass
     backend_name = None  # Set to a field or fixed value in subclass
     accepts_logins = True  # Whether to display a sign-in button when the provider is enabled

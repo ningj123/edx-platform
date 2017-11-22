@@ -854,6 +854,17 @@ class RegistrationFormFactory(object):
                         running_pipeline.get('kwargs')
                     )
 
+                    # Make input fields read-only for fields passed in via SSO callback data.
+                    if current_provider.sync_learner_profile_data:
+                        for field_name in self.DEFAULT_FIELDS + self.EXTRA_FIELDS:
+                            if field_name in field_overrides and field_name not in ['terms_of_service', 'honor_code']:
+                                if field_overrides[field_name]:
+                                    form_desc.override_field_properties(
+                                        field_name,
+                                        default=field_overrides[field_name],
+                                        restrictions={"readonly": True,}
+                                    )
+
                     # When the TPA Provider is configured to skip the registration form and we are in an
                     # enterprise context, we need to hide all fields except for terms of service and
                     # ensure that the user explicitly checks that field.
