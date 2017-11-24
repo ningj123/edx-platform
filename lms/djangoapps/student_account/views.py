@@ -236,8 +236,9 @@ def update_context_for_enterprise(request, context):
     context = context.copy()
 
     sidebar_context = enterprise_sidebar_context(request)
+    sync_learner_profile_data = context['data']['third_party_auth']['syncLearnerProfileData']
 
-    if sidebar_context:
+    if sidebar_context and not sync_learner_profile_data:
         context['data']['registration_form_desc']['fields'] = enterprise_fields_only(
             context['data']['registration_form_desc']
         )
@@ -246,6 +247,9 @@ def update_context_for_enterprise(request, context):
         context['data']['hide_auth_warnings'] = True
     else:
         context['enable_enterprise_sidebar'] = False
+
+    if sync_learner_profile_data:
+        context['data']['hide_auth_warnings'] = True
 
     return context
 
@@ -327,7 +331,7 @@ def _third_party_auth_context(request, redirect_to, tpa_hint=None):
         "finishAuthUrl": None,
         "errorMessage": None,
         "registerFormSubmitButtonText": _("Create Account"),
-        "hideLoginLink": False,
+        "syncLearnerProfileData": False,
     }
 
     if third_party_auth.is_enabled():
@@ -359,7 +363,7 @@ def _third_party_auth_context(request, redirect_to, tpa_hint=None):
             if current_provider is not None:
                 context["currentProvider"] = current_provider.name
                 context["finishAuthUrl"] = pipeline.get_complete_url(current_provider.backend_name)
-                context["hideLoginLink"] = current_provider.sync_learner_profile_data
+                context["syncLearnerProfileData"] = current_provider.sync_learner_profile_data
 
                 if current_provider.skip_registration_form:
                     # For enterprise (and later for everyone), we need to get explicit consent to the
