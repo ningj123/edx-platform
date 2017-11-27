@@ -250,6 +250,8 @@ def update_context_for_enterprise(request, context):
 
     if sync_learner_profile_data:
         context['data']['hide_auth_warnings'] = True
+        enterprise_customer = enterprise_customer_for_request(request)
+        context['data']['enterprise_name'] = enterprise_customer and enterprise_customer['name']
 
     return context
 

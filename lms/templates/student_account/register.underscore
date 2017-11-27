@@ -11,7 +11,10 @@
 <% } else { %>
 	<div class="sync-learner-account">
 		<div class="welcome-message">Relevant learning to advance your carrier.</div>
-		<div class="account-info-message">[ENT] has provided some information for your new account.</div>
+
+		<% if (context.enterpriseName) { %>
+			<div class="account-info-message"><%- context.enterpriseName %> has provided some information for your new account.</div>
+		<% } %>
 	</div>
 <% } %>
 
