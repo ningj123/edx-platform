@@ -632,7 +632,7 @@ class TestProgramProgressMeter(TestCase):
             self.assertEqual(meter.progress(count_only=False), expected)
 
 
-def _create_course(self, course_price, course_run_count=1, entitlement_count=0):
+def _create_course(self, course_price, course_run_count=1, make_entitlement=False):
     """
     Creates the course in mongo and update it with the instructor data.
     Also creates catalog course with respect to course run.
@@ -650,7 +650,10 @@ def _create_course(self, course_price, course_run_count=1, entitlement_count=0):
 
         run = CourseRunFactory(key=unicode(course.id), seats=[SeatFactory(price=course_price)])
         course_runs.append(run)
-    entitlements = [EntitlementFactory() for x in range(entitlement_count)]
+    if make_entitlement:
+        entitlements = [EntitlementFactory()]
+    else:
+        entitlements = []
 
     return CourseFactory(course_runs=course_runs, entitlements=entitlements)
 
@@ -976,10 +979,10 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         """
         Learner should be eligible for one click purchase if:
             - program is eligible for one click purchase
-            - There are courses remaining that have not been purchased
+            - There are remaining unpurchased courses with entitlement products
         """
-        course1 = _create_course(self, self.course_price, course_run_count=2, entitlement_count=1)
-        course2 = _create_course(self, self.course_price, course_run_count=2, entitlement_count=1)
+        course1 = _create_course(self, self.course_price, course_run_count=2, make_entitlement=True)
+        course2 = _create_course(self, self.course_price, course_run_count=2, make_entitlement=True)
         expected_skus = set([course1['entitlements'][0]['sku'], course2['entitlements'][0]['sku']])
         program = ProgramFactory(
             courses=[course1, course2],
@@ -990,9 +993,27 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         self.assertTrue(data['is_learner_eligible_for_one_click_purchase'])
         self.assertEqual(set(data['skus']), expected_skus)
 
+    def test_learner_eligibility_for_one_click_purchase_ineligible_program(self):
+        """
+        Learner should not be eligible for one click purchase if the program is not eligible for one click purchase
+        """
+        course1 = _create_course(self, self.course_price, course_run_count=2, make_entitlement=True)
+        course2 = _create_course(self, self.course_price, course_run_count=2, make_entitlement=True)
+        program = ProgramFactory(
+            courses=[course1, course2],
+            is_program_eligible_for_one_click_purchase=False,
+            applicable_seat_types=['verified'],
+        )
+        data = ProgramDataExtender(program, self.user).extend()
+        self.assertFalse(data['is_learner_eligible_for_one_click_purchase'])
+
     def test_learner_eligibility_for_one_click_purchase_user_entitlements(self):
-        course1 = _create_course(self, self.course_price, course_run_count=2)
-        course2 = _create_course(self, self.course_price, course_run_count=2, entitlement_count=1)
+        """
+        Learner should be eligibile for one click purchase if they hold an entitlement in one or more courses
+        in the program and there are remaining unpurchased courses in the program with entitlement products.
+        """
+        course1 = _create_course(self, self.course_price, course_run_count=2, make_entitlement=True)
+        course2 = _create_course(self, self.course_price, course_run_count=2, make_entitlement=True)
         CourseEntitlementFactory(user=self.user, course_uuid=course1['uuid'], mode='verified')
         expected_skus = set([course2['entitlements'][0]['sku']])
         program = ProgramFactory(
@@ -1005,6 +1026,9 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         self.assertEqual(set(data['skus']), expected_skus)
 
     def test_all_courses_owned(self):
+        """
+        Learner should not be eligible for one click purchase if they hold entitlements in all courses in the program.
+        """
         course1 = _create_course(self, self.course_price, course_run_count=2)
         course2 = _create_course(self, self.course_price, course_run_count=2)
         CourseEntitlementFactory(user=self.user, course_uuid=course1['uuid'], mode='verified')
@@ -1019,9 +1043,31 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         self.assertEqual(data['skus'], [])
 
     def test_entitlement_product_wrong_mode(self):
-        course1 = _create_course(self, self.course_price, entitlement_count=1)
+        """
+        Learner should not be eligible for one click purchase if
+        the entitlement product for a course in the program is not in an applicable mode.
+        """
+        course1 = _create_course(self, self.course_price, course_run_count=0)
         course2 = _create_course(self, self.course_price)
-        expected_skus = set([course1['entitlements'][0]['sku'], course2['course_runs'][0]['seats'][0]['sku']])
+        course2['entitlements'].append(EntitlementFactory(mode=CourseMode.PROFESSIONAL))
+        program = ProgramFactory(
+            courses=[course1, course2],
+            is_program_eligible_for_one_click_purchase=True,
+            applicable_seat_types=['verified'],
+        )
+        data = ProgramDataExtender(program, self.user).extend()
+        self.assertFalse(data['is_learner_eligible_for_one_click_purchase'])
+        self.assertEqual(data['skus'], [])
+
+    def test_entitlement_product_and_user_enrollment(self):
+        """
+        Learner should be eligible for one click purchase if they hold an enrollment
+        but not an entitlement in a course for which there exists an entitlement product.
+        """
+        course1 = _create_course(self, self.course_price, make_entitlement=True)
+        course2 = _create_course(self, self.course_price)
+        expected_skus = set([course2['course_runs'][0]['seats'][0]['sku']])
+        CourseEnrollmentFactory(user=self.user, course_id=course1['course_runs'][0]['key'], mode='verified')
         program = ProgramFactory(
             courses=[course1, course2],
             is_program_eligible_for_one_click_purchase=True,

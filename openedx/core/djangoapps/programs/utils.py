@@ -12,7 +12,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from django.utils.functional import cached_property
 from edx_rest_api_client.exceptions import SlumberBaseException
 from opaque_keys.edx.keys import CourseKey
@@ -473,12 +472,11 @@ class ProgramDataExtender(object):
         """
         course_uuids = set(course['uuid'] for course in courses)
         # Filter the entitlements' modes with a case-insensitive match against applicable seat_types
-        query = Q()
-        for seat_type in self.data['applicable_seat_types']:
-            query = query | Q(mode__iexact=seat_type)
-        query = Q(course_uuid__in=course_uuids) & query
-        entitlements = self.user.courseentitlement_set.filter(query)
-        courses_with_entitlements = set(str(entitlement.course_uuid) for entitlement in entitlements)
+        entitlements = self.user.courseentitlement_set.filter(
+            mode__in=self.data['applicable_seat_types'],
+            course_uuid__in=course_uuids,
+        ).exclude(expired_at__lte=datetime.datetime.now())
+        courses_with_entitlements = set(unicode(entitlement.course_uuid) for entitlement in entitlements)
         return [course for course in courses if course['uuid'] not in courses_with_entitlements]
 
     def _filter_out_courses_with_enrollments(self, courses):
@@ -510,6 +508,8 @@ class ProgramDataExtender(object):
         discount data of the program and SKUs of seats that should be added to basket.
         """
         applicable_seat_types = set(seat for seat in self.data['applicable_seat_types'] if seat != 'credit')
+        if 'professional' in applicable_seat_types:
+            applicable_seat_types.add('no-id-professional')
         is_learner_eligible_for_one_click_purchase = self.data['is_program_eligible_for_one_click_purchase']
         skus = []
         bundle_variant = 'full'
