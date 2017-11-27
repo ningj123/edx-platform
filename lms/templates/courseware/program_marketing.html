@@ -338,11 +338,21 @@ endorser_org = endorser_position.get('organization_name') or corporate_endorseme
         <h2>${_('Frequently Asked Questions')}</h2>
       </div>
       % for faq in faqs:
+        <%
+          faq_hash = hash(faq['question'])
+          is_truncated = len(faq['answer']) > 100
+        %>
         <div class="col-4 faq">
           <div class="question">
             ${faq['question']}
           </div>
-          <div class="answer">
+          <div id="preview-answer-${faq_hash}">
+            ${HTML(faq['answer'][:100])}
+            % if is_truncated:
+              <a class="faq-answer-toggle" onclick="expandFAQ(this, '${faq_hash}')">${_('See more')}</a>
+            % endif
+          </div>
+          <div id="complete-answer-${faq_hash}" class="hidden">
             ${HTML(faq['answer'])}
           </div>
         </div>
