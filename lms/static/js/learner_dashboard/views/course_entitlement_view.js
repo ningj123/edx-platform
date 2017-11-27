@@ -1,3 +1,16 @@
+// This is required for karma testing due to a known issue in Bootstrap-v4: https://github.com/twbs/bootstrap/pull/22888
+// The issue is that bootstrap tries to access Popper's global Popper object which is not initialized on loading
+// from the karma configuration. The next version of bootstrap (>v4.2) will solve this issue.
+// Once this is resolved, we should import bootstrap through require-config.js and main.js (for jasmine testing)
+var Popper;
+if (typeof RequireJS === "undefined") {
+    Popper = require(['common/js/vendor/popper']);  // eslint-disable-line global-require
+    require(['common/js/vendor/bootstrap']);  // eslint-disable-line global-require
+} else {
+    Popper = RequireJS.require(['common/js/vendor/popper']);
+    RequireJS.require(['common/js/vendor/bootstrap']);
+}
+
 (function(define) {
     'use strict';
 
@@ -10,9 +23,7 @@
         'js/learner_dashboard/models/course_entitlement_model',
         'js/learner_dashboard/models/course_card_model',
         'text!../../../templates/learner_dashboard/course_entitlement.underscore',
-        'text!../../../templates/learner_dashboard/verification_popover.underscore',
-        'popper',
-        'bootstrap'
+        'text!../../../templates/learner_dashboard/verification_popover.underscore'
     ],
          function(
              Backbone,
@@ -24,9 +35,7 @@
              EntitlementModel,
              CourseCardModel,
              pageTpl,
-             verificationPopoverTpl,
-             popper,
-             bootstrap
+             verificationPopoverTpl
          ) {
              return Backbone.View.extend({
                  tpl: HtmlUtils.template(pageTpl),
@@ -71,7 +80,6 @@
                      HtmlUtils.setHtml(this.$el, this.tpl(this.entitlementModel.toJSON()));
                      this.delegateEvents();
                      this.updateEnrollBtn();
-                     return this;
                  },
 
                  postRender: function() {
@@ -172,14 +180,15 @@
                      // Reset the card contents to the unenrolled state
                      this.$triggerOpenBtn.addClass('hidden');
                      this.$enterCourseBtn.addClass('hidden');
-                     this.$dateDisplayField.html(
+                     this.$courseCardMessages.remove();
+                     this.$('.enroll-btn-initial').focus();
+                     HtmlUtils.setHtml(
+                        this.$dateDisplayField,
                          HtmlUtils.joinHtml(
                              HtmlUtils.HTML('<span class="icon fa fa-warning" aria-hidden="true"></span>'),
                              HtmlUtils.HTML(gettext('You must select a session below to access course.'))
-                         ).text
+                         )
                      );
-                     this.$courseCardMessages.remove();
-                     this.$('.enroll-btn-initial').focus();
 
                      // Remove links to previously enrolled sessions
                      this.$courseImageLink.replaceWith( // xss-lint: disable=javascript-jquery-insertion

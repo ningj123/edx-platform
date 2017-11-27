@@ -208,6 +208,9 @@
             'grouping-annotator': {
                 deps: ['annotator']
             },
+            'popper': {
+                exports: 'Popper'
+            },
             'bootstrap': {
                 deps: ['jquery', 'popper'],
                 exports: 'bootstrap'

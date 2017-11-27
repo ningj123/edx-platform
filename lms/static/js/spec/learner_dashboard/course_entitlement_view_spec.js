@@ -67,7 +67,7 @@ define([
             it('Select session container should be visible when user has not yet selected a session.', function() {
                 setupView(false);
                 view.render();
-                expect($(view.el).hasClass('hidden')).toBe(false);
+                expect(view.$el.hasClass('hidden')).toBe(false);
             });
 
             it('Select session container should be hidden when user selected a session.', function() {

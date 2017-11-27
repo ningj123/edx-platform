@@ -653,7 +653,7 @@
     .message-copy .copy {
       @extend %t-copy-sub1;
 
-      margin: 2px 0 0 0;
+      margin: 2px 0 0;
     }
 
     // CASE: expandable
@@ -813,7 +813,7 @@
       .action-view-consent {
         @extend %btn-pl-white-base;
         @include float(right);
-              
+
         &.archived {
           @extend %btn-pl-default-base;
         }
@@ -1430,11 +1430,11 @@ p.course-block {
   padding: 6px 32px 7px;
   text-align: center;
   margin-top: 16px;
-  opacity:0.5;
-  background:#808080;
-  border:0;
+  opacity: 0.5;
+  background: #808080;
+  border: 0;
   color: theme-color("inverse");
-  box-shadow:none;
+  box-shadow: none;
 
   &.archived {
     @include button(simple, $button-archive-color);
@@ -1664,5 +1664,4 @@ a.fade-cover {
     color: theme-color("inverse");
     text-decoration: none;
   }
-
 }
