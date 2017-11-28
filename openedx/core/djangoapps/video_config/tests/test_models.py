@@ -10,6 +10,7 @@ from django.test import TestCase
 
 from opaque_keys.edx.locator import CourseLocator
 from openedx.core.djangoapps.video_config.models import CourseHLSPlaybackEnabledFlag, HLSPlaybackEnabledFlag
+from request_cache.middleware import RequestCache
 
 
 @contextmanager
@@ -28,6 +29,7 @@ def video_feature_flags(
         course_id (CourseLocator): Course locator for course specific configurations
         enabled_for_course (bool): Specifies whether feature should be available for a course
     """
+    RequestCache.clear_request_cache()
     all_courses_model_class.objects.create(enabled=global_flag, enabled_for_all_courses=enabled_for_all_courses)
     if course_id:
         course_specific_model_class.objects.create(course_id=course_id, enabled=enabled_for_course)
