@@ -19,6 +19,7 @@ from mock import patch
 from opaque_keys import InvalidKeyError
 from pyquery import PyQuery as pq
 
+from entitlements.tests.factories import CourseEntitlementFactory
 from student.cookies import get_user_info_cookie_data
 from student.helpers import DISABLE_UNENROLL_CERT_STATES
 from student.models import CourseEnrollment, UserProfile
@@ -344,6 +345,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin):
             - the text 'In order to view the course you must select a session:'
             - an unhidden course-entitlement-selection-container
         """
+        CourseEntitlementFactory(user=self.user)
         response = self.client.get(self.path)
 
     def test_fulfilled_entitlement(self):
@@ -354,4 +356,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin):
             - the text 'To change your session or leave your current session, please select from the following'
             - NOT have a hidden change-session btn-link
         """
+        course = CourseFactory()
+        enrollment = CourseEnrollmentFactory(user=self.user, course_id=course.course_runs[0].key)
+        CourseEntitlementFactory(user=self.user, course_uuid=course.uuid, enrollment_course_run=enrollment)
         response = self.client.get(self.path)

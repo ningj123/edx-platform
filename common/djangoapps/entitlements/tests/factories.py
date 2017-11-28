@@ -16,3 +16,4 @@ class CourseEntitlementFactory(factory.django.DjangoModelFactory):
     mode = FuzzyChoice(['verified', 'profesional'])
     user = factory.SubFactory(UserFactory)
     order_number = FuzzyText(prefix='TEXTX', chars=string.digits)
+    enrollment_course_run = None
