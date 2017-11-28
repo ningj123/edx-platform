@@ -80,6 +80,7 @@ if (typeof RequireJS === 'undefined') {
                      HtmlUtils.setHtml(this.$el, this.tpl(this.entitlementModel.toJSON()));
                      this.delegateEvents();
                      this.updateEnrollBtn();
+                     return this;
                  },
 
                  postRender: function() {
@@ -102,15 +103,15 @@ if (typeof RequireJS === 'undefined') {
                      Handles enrolling in a course, unenrolling in a session and changing session.
                      The new session id is stored as a data attribute on the option in the session-select element.
                      */
-                     var isUnenrolling;
-
-                     // Grab the id for the desired session, an unenrollment event will return null
-                     this.currentSessionSelection = this.$('.session-select')
-                         .find('option:selected').data('session_id');
-                     isUnenrolling = !this.currentSessionSelection;
+                     var isLeavingSession;
 
                      // Do not allow for enrollment when button is disabled
                      if (this.$('.enroll-btn-initial').hasClass('disabled')) return;
+
+                     // Grab the id for the desired session, an leave session event will return null
+                     this.currentSessionSelection = this.$('.session-select')
+                         .find('option:selected').data('session_id');
+                     isLeavingSession = !this.currentSessionSelection;
 
                      // Display the indicator icon
                      HtmlUtils.setHtml(this.$dateDisplayField,
@@ -118,7 +119,7 @@ if (typeof RequireJS === 'undefined') {
                      );
 
                      $.ajax({
-                         type: isUnenrolling ? 'DELETE' : 'POST',
+                         type: isLeavingSession ? 'DELETE' : 'POST',
                          url: this.enrollUrl,
                          contentType: 'application/json',
                          dataType: 'json',
@@ -151,8 +152,9 @@ if (typeof RequireJS === 'undefined') {
 
                      // Display a success indicator
                      HtmlUtils.setHtml(this.$dateDisplayField,
-                         HtmlUtils.HTML(
-                             successIconEl + this.getAvailableSessionWithId(data.course_run_id).session_dates
+                         HtmlUtils.joinHtml(
+                             HtmlUtils.HTML(successIconEl),
+                             this.getAvailableSessionWithId(data.course_run_id).session_dates
                          )
                      );
 
@@ -384,10 +386,10 @@ if (typeof RequireJS === 'undefined') {
 
                  getAvailableSessionWithId: function(sessionId) {
                      /* Returns an available session given a sessionId */
-                     var availableSessions = this.entitlementModel.get('availableSessions').filter(function(session) {
+                     var availableSession = this.entitlementModel.get('availableSessions').find(function(session) {
                          return session.session_id === sessionId;
                      });
-                     return availableSessions ? availableSessions[0] : '';
+                     return availableSession ? availableSession : '';
                  }
              });
          }

@@ -9,15 +9,15 @@
     <div class="action-controls">
         <select class="session-select">
             <% _.each(availableSessions, function(session) { %>
-                <option data-session_id="<%-session.session_id%>">
+                <option data-session_id="<%- session.session_id %>">
                     <%-session.session_dates%>
                     <% if (session.session_id == currentSessionId) { %>
-                        <%- gettext('  - Currently Enrolled')%>
+                        <%-gettext('  - Currently Enrolled')%>
                     <% } else if (session.enrollment_end){ %>
-                        <%- gettext(' (Enroll by ') + session.enrollment_end + ')'%>
+                        <%-StringUtils.interpolate(gettext('(Enroll by {endDate})'), {endDate: session.enrollment_end})%>
                     <% } %>
                 </option>
-            <% }) %>
+            <% }); %>
             <option disabled><%- gettext('More sessions coming soon')%></option>
             <% if (currentSessionId){%> <option><%- gettext('Leave current session and decide later.')%></option><%}%>
         </select>

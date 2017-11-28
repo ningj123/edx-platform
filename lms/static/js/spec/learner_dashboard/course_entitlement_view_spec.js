@@ -10,16 +10,13 @@ define([
         var view = null,
             setupView,
             entitlementUUID = 'a9aiuw76a4ijs43u18',
-            initialSessionId = '',
             testSessionIds = ['test_session_id_1', 'test_session_id_2'];
 
         setupView = function(isAlreadyEnrolled) {
-            var entitlementAvailableSessions;
-
             setFixtures('<div class="course-entitlement-selection-container"></div>');
 
-            initialSessionId = isAlreadyEnrolled ? testSessionIds[0] : '';
-            entitlementAvailableSessions = [{
+            self.initialSessionId = isAlreadyEnrolled ? testSessionIds[0] : '';
+            self.entitlementAvailableSessions = [{
                 enrollment_end: null,
                 session_start: '2013-02-05T05:00:00+00:00',
                 pacing_type: 'instructor_paced',
@@ -34,16 +31,16 @@ define([
             }];
 
             view = new CourseEntitlementView({
-                el: '<div class="course-entitlement-selection-container"></div>',
+                el: '.course-entitlement-selection-container',
                 triggerOpenBtn: '#course-card-0 .change-session',
                 courseCardMessages: '#course-card-0 .messages-list > .message',
                 courseTitleLink: '#course-card-0 .course-title a',
                 courseImageLink: '#course-card-0 .wrapper-course-image > a',
                 dateDisplayField: '#course-card-0 .info-date-block',
                 enterCourseBtn: '#course-card-0 .enter-course',
-                availableSessions: JSON.stringify(entitlementAvailableSessions),
+                availableSessions: JSON.stringify(self.entitlementAvailableSessions),
                 entitlementUUID: entitlementUUID,
-                currentSessionId: initialSessionId,
+                currentSessionId: self.initialSessionId,
                 userId: '1',
                 enrollUrl: '/api/enrollment/v1/enrollment',
                 courseHomeUrl: '/courses/course-v1:edX+DemoX+Demo_Course/course/'
@@ -54,46 +51,82 @@ define([
             if (view) view.remove();
         });
 
-        describe('Visibility and initialization of view', function() {
+        describe('Initialization of view', function() {
             it('Should create a entitlement view element', function() {
                 setupView(false);
                 expect(view).toBeDefined();
             });
-
-            it('Select session container should be visible when user has not yet selected a session.', function() {
-                setupView(false);
-                expect(view.$el.hasClass('hidden')).toBe(false);
-            });
-
-            it('Select session container should be hidden when is already enrolled in a session.', function() {
-                setupView(true);
-                expect(view.$el.hasClass('hidden')).toBe(true);
-            });
         });
 
-        describe('Available Sessions Select', function() {
+        describe('Available Sessions Select - Unfulfilled Entitlement', function() {
             beforeEach(function() {
-                setupView(true);
+                setupView(false);
+                self.select = view.$('.session-select');
+                self.selectOptions = select.find('option');
             });
 
             it('Select session dropdown should show all available course runs and a coming soon option.', function() {
-                // TODO: Implement this
+                expect(self.selectOptions.length).toEqual(self.entitlementAvailableSessions.length + 1);
             });
 
             it('Self paced courses should have visual indication in the selection option.', function() {
-                // TODO: Implement this
+                var selfPacedOptionIndex = self.entitlementAvailableSessions.find( function(session, index) {
+                    if (session.pacing_type === 'self-paced') return index;
+                });
+                var selfPacedOption = self.selectOptions[selfPacedOptionIndex];
+                expect(selfPacedOption && selfPacedOption.text.includes('Self Paced')).toBe(true);
             });
 
             it('Courses with an enroll-by date should indicate so on the selection option.', function() {
-                // TODO: Implement this
-            });
-
-            it('If user is enrolled they should be able to leave current session/select a session later.', function() {
-                // TODO: Implement this
+                var enrollEndSetOptionIndex = self.entitlementAvailableSessions.find( function(session, index) {
+                    if (session.enrollment_end !== 'null') return index;
+                });
+                var enrollEndSetOption = self.selectOptions[enrollEndSetOptionIndex];
+                expect(enrollEndSetOption && enrollEndSetOption.text.includes('Enroll By') > -1).toBe(true);
             });
 
             it('Title element should correctly indicate the expected behavior.', function() {
-                // TODO: Implement this
+                expect(view.$('.action-header').text().includes(
+                    'In order to view the course you must select a session'
+                )).toBe(true);
+            });
+
+            it('Change session button should have the correct text.', function() {
+                expect(view.$('.enroll-btn-initial').text() === 'Select Session').toBe(true);
+            });
+        });
+
+        describe('Available Sessions Select - Fulfilled Entitlement', function() {
+            beforeEach(function() {
+                setupView(true);
+                self.select = view.$('.session-select');
+                self.selectOptions = select.find('option');
+            });
+
+            it('Select session dropdown should show available course runs, coming soon and leave options.', function() {
+                expect(self.selectOptions.length).toEqual(self.entitlementAvailableSessions.length + 2);
+            });
+
+            it('Select session dropdown should allow user to leave the current session.', function() {
+                var leaveSessionOption = self.selectOptions[self.selectOptions.length - 1];
+                expect(leaveSessionOption.text.includes('Leave current session and decide later.')).toBe(true);
+            });
+
+            it('Currently enrolled session should be specified in the dropdown options.', function() {
+                var enrolledSessionIndex = self.entitlementAvailableSessions.find( function(session) {
+                    return self.initialSessionId === session.session_id;
+                });
+                expect(self.selectOptions[enrolledSessionIndex].text.contains('(Currently Enrolled)')).toBe(true);
+            });
+
+            it('Title element should correctly indicate the expected behavior.', function() {
+                expect(view.$('.action-header').text().includes(
+                    'To change your session or leave your current session, please select from the following'
+                )).toBe(true);
+            });
+
+            it('Change session button should have the correct text.', function() {
+                expect(view.$('.enroll-btn-initial').text() === 'Change Session').toBe(true);
             });
         });
 
