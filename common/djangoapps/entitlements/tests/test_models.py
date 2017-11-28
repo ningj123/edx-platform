@@ -84,10 +84,12 @@ class TestModels(TestCase):
         # and apply it to both the entitlement and the course
         past_datetime = datetime.utcnow().replace(tzinfo=pytz.UTC) - timedelta(days=365 * 2)
         entitlement.created = past_datetime
+        self.enrollment.created = past_datetime
         self.course.start = past_datetime
 
         entitlement.save()
         self.course.save()
+        self.enrollment.save()
 
         assert entitlement.is_entitlement_regainable() is False
 

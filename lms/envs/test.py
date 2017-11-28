@@ -594,10 +594,3 @@ TEMPLATES[0]['OPTIONS']['debug'] = True
 ########################## Derive Any Derived Settings  #######################
 
 derive_settings(__name__)
-
-############## Settings for Entitlements API #######################
-ENTITLEMENTS_POLICY = {
-    'expiration_period_days': 450,
-    'refund_period_days': 60,
-    'regain_period_days': 14
-}

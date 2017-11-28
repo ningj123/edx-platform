@@ -1,4 +1,3 @@
-import sys
 import uuid as uuid_tools
 from datetime import datetime, timedelta
 
@@ -18,16 +17,19 @@ class CourseEntitlementPolicy(models.Model):
 
     expiration_period_days = models.IntegerField(
         default=450,
-        help_text="Number of days from when an entitlement is created until when it is expired."
+        help_text="Number of days from when an entitlement is created until when it is expired.",
+        null=False
     )
     refund_period_days = models.IntegerField(
         default=60,
-        help_text="Number of days from when an entitlement is created until when it is no longer refundable."
+        help_text="Number of days from when an entitlement is created until when it is no longer refundable.",
+        null=False
     )
     regain_period_days = models.IntegerField(
         default=14,
         help_text="Number of days from when an entitlement is created until " +
-                  "when it is no longer able to be regained by a user."
+                  "when it is no longer able to be regained by a user.",
+        null=False
     )
     site = models.ForeignKey(Site)
 
@@ -42,7 +44,8 @@ class CourseEntitlement(TimeStampedModel):
     course_uuid = models.UUIDField(help_text='UUID for the Course, not the Course Run')
     expired_at = models.DateTimeField(
         null=True,
-        help_text='The date that an entitlement expired, if NULL the entitlement has not expired.'
+        help_text='The date that an entitlement expired, if NULL the entitlement has not expired.',
+        blank=True
     )
     mode = models.CharField(max_length=100, help_text='The mode of the Course that will be applied on enroll.')
     enrollment_course_run = models.ForeignKey(
@@ -51,7 +54,7 @@ class CourseEntitlement(TimeStampedModel):
         help_text='The current Course enrollment for this entitlement. If NULL the Learner has not enrolled.'
     )
     order_number = models.CharField(max_length=128, null=True)
-    policy = models.ForeignKey(CourseEntitlementPolicy, null=True)
+    _policy = models.ForeignKey(CourseEntitlementPolicy, null=True, blank=True)
 
     @property
     def expired_at_datetime(self):
@@ -59,6 +62,14 @@ class CourseEntitlement(TimeStampedModel):
             self.expired_at = datetime.utcnow()
             self.save()
         return self.expired_at
+
+    @property
+    def policy(self):
+        return self._policy or CourseEntitlementPolicy()
+
+    @policy.setter
+    def policy(self, value):
+        self._policy = value
 
     def get_days_since_created(self):
         """
@@ -71,12 +82,8 @@ class CourseEntitlement(TimeStampedModel):
         """
         Returns an integer of number of days until the entitlement expires
         """
-        expiration_period = settings.ENTITLEMENTS_POLICY.get('expiration_period_days', sys.maxint)
-        if self.policy:
-            expiration_period = self.policy.expiration_period_days
-        expiry_date = self.created + timedelta(expiration_period)
-        utc = pytz.UTC
-        now = datetime.now(tz=utc)
+        expiry_date = self.created + timedelta(self.policy.expiration_period_days)
+        now = datetime.now(tz=pytz.UTC)
         return (expiry_date - now).days
 
     def is_entitlement_regainable(self):
@@ -86,14 +93,10 @@ class CourseEntitlement(TimeStampedModel):
         the course or their redemption, whichever comes later
         """
         if self.enrollment_course_run:
-            utc = pytz.UTC
+            now = datetime.now(tz=pytz.UTC)
             course_overview = CourseOverview.get_from_id(self.enrollment_course_run.course_id)
-            now = datetime.now(tz=utc)
-            regain_period = settings.ENTITLEMENTS_POLICY.get('regain_period_days', sys.maxint)
-            if self.policy:
-                regain_period = self.policy.regain_period_days
-            return ((now - course_overview.start).days < regain_period or
-                    (now - self.enrollment_course_run.created).days < regain_period)
+            return ((now - course_overview.start).days < self.policy.regain_period_days or
+                    (now - self.enrollment_course_run.created).days < self.policy.regain_period_days)
         return False
 
     def is_entitlement_refundable(self):
@@ -101,19 +104,11 @@ class CourseEntitlement(TimeStampedModel):
         Determines from the policy if an entitlement can still be refunded, if the entitlement has not
         yet been redeemed (enrollment_course_run is NULL) and policy.refund_period_days has not yet passed
         """
-        days_since_created = self.get_days_since_created()
-        refund_period = settings.ENTITLEMENTS_POLICY.get('refund_period_days', sys.maxint)
-        if self.policy:
-            refund_period = self.policy.refund_period_days
-        return (days_since_created < refund_period) and not self.enrollment_course_run
+        return (self.get_days_since_created() < self.policy.refund_period_days) and not self.enrollment_course_run
 
     def is_entitlement_redeemable(self):
         """
         Determines from the policy if an entitlement can be redeemed, if it has not passed the
         expiration period of policy.expiration_period_days, and has not already been redeemed
         """
-        days_since_created = self.get_days_since_created()
-        expiration_period = settings.ENTITLEMENTS_POLICY.get('expiration_period_days', sys.maxint)
-        if self.policy:
-            expiration_period = self.policy.expiration_period_days
-        return days_since_created < expiration_period and not self.enrollment_course_run
+        return self.get_days_since_created() < self.policy.expiration_period_days and not self.enrollment_course_run

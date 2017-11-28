@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='courseentitlement',
-            name='policy',
+            name='_policy',
             field=models.ForeignKey(to='entitlements.CourseEntitlementPolicy', null=True),
         ),
     ]
