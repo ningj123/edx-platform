@@ -13,7 +13,7 @@ import crum
 from django.conf import settings
 from django.test.client import RequestFactory
 
-from request_cache import middleware
+import middleware
 
 
 log = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ Configuration models for Video XModule
 from config_models.models import ConfigurationModel
 from django.db.models import BooleanField
 
-from request_cache.middleware import request_cached
+from common.djangoapps.request_cache.middleware import request_cached
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 
 
