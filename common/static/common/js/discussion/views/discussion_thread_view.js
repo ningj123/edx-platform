@@ -62,7 +62,9 @@
 
             DiscussionThreadView.prototype.events = {
                 'click .discussion-submit-post': 'submitComment',
-                'click .add-response-btn': 'scrollToAddResponse'
+                'click .add-response-btn': 'scrollToAddResponse',
+                'focusin .wmd-button-row:first-child': 'focusInToolbar'
+                // 'focusout .wmd-button-row': ''
             };
 
             DiscussionThreadView.prototype.$ = function(selector) {
@@ -322,6 +324,11 @@
                 } else {
                     return this.$el.find('.add-response').hide();
                 }
+            };
+
+            DiscussionThreadView.prototype.focusInToolbar = function(event) {
+                var toolbar = $(event.target);
+                
             };
 
             DiscussionThreadView.prototype.scrollToAddResponse = function(event) {
