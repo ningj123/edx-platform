@@ -54,7 +54,7 @@ class CourseEntitlement(TimeStampedModel):
     policy = models.ForeignKey(CourseEntitlementPolicy, null=True)
 
     @property
-    def dttm_expired_at(self):
+    def expired_at_datetime(self):
         if not self.expired_at and self.is_entitlement_redeemable():
             self.expired_at = datetime.utcnow()
             self.save()
