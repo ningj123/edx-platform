@@ -22,9 +22,14 @@ class Migration(migrations.Migration):
                 ('site', models.ForeignKey(to='sites.Site')),
             ],
         ),
+        migrations.AlterField(
+            model_name='courseentitlement',
+            name='expired_at',
+            field=models.DateTimeField(help_text=b'The date that an entitlement expired, if NULL the entitlement has not expired.', null=True, blank=True),
+        ),
         migrations.AddField(
             model_name='courseentitlement',
             name='_policy',
-            field=models.ForeignKey(to='entitlements.CourseEntitlementPolicy', null=True),
+            field=models.ForeignKey(blank=True, to='entitlements.CourseEntitlementPolicy', null=True),
         ),
     ]
