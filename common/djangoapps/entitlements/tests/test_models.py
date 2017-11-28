@@ -8,7 +8,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from openedx.core.djangoapps.content.course_overviews.tests.factories import CourseOverviewFactory
-from student.tests.factories import CourseEnrollmentFactory, UserFactory
+from student.tests.factories import CourseEnrollmentFactory
 
 # Entitlements is not in CMS' INSTALLED_APPS so these imports will error during test collection
 if settings.ROOT_URLCONF == 'lms.urls':
@@ -24,8 +24,7 @@ class TestModels(TestCase):
         self.course = CourseOverviewFactory.create(
             start=datetime.utcnow()
         )
-        self.user = UserFactory(is_staff=True)
-        self.enrollment = CourseEnrollmentFactory.create(user=self.user, course_id=self.course.id)
+        self.enrollment = CourseEnrollmentFactory.create(course_id=self.course.id)
 
     def test_is_entitlement_redeemable(self):
         """
