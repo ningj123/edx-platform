@@ -509,7 +509,7 @@ class ProgramDataExtender(object):
         """
         applicable_seat_types = set(seat for seat in self.data['applicable_seat_types'] if seat != 'credit')
         if 'professional' in applicable_seat_types:
-            applicable_seat_types.add('no-id-professional')
+            self.data['applicable_seat_types'].append('no-id-professional')
         is_learner_eligible_for_one_click_purchase = self.data['is_program_eligible_for_one_click_purchase']
         skus = []
         bundle_variant = 'full'

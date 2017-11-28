@@ -13,6 +13,6 @@ class CourseEntitlementFactory(factory.django.DjangoModelFactory):
         model = CourseEntitlement
 
     course_uuid = uuid.uuid4()
-    mode = FuzzyChoice(['verified', 'profesional'])
+    mode = FuzzyChoice(['professional', 'verified', 'no-id-professional', 'credit'])
     user = factory.SubFactory(UserFactory)
     order_number = FuzzyText(prefix='TEXTX', chars=string.digits)
