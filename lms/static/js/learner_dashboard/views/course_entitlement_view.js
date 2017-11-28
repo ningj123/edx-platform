@@ -92,8 +92,8 @@ if (typeof RequireJS === 'undefined') {
                      }.bind(this));
 
                      // Ensure that focus moves to the popover on click of the initial change enrollment button.
-                     $(document).on('click', '.enroll-btn-initial', function() {
-                         this.showDialog(this.$('.enroll-btn-initial'));
+                     this.$('.enroll-btn-initial').click(function(e) {
+                         this.showDialog($(e.target));
                          this.$('.final-confirmation-btn:first').focus();
                      }.bind(this));
                  },

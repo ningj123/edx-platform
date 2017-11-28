@@ -72,7 +72,7 @@ define([
             });
 
             it('Self paced courses should have visual indication in the selection option.', function() {
-                var selfPacedOptionIndex = entitlementAvailableSessions.find( function(session, index) {
+                var selfPacedOptionIndex = _.each(entitlementAvailableSessions, function(session, index) {
                     if (session.pacing_type === 'self_paced') return index;
                 });
                 var selfPacedOption = selectOptions[selfPacedOptionIndex];
@@ -80,7 +80,7 @@ define([
             });
 
             it('Courses with an enroll-by date should indicate so on the selection option.', function() {
-                var enrollEndSetOptionIndex = entitlementAvailableSessions.find( function(session, index) {
+                var enrollEndSetOptionIndex = _.each(entitlementAvailableSessions, function(session, index) {
                     if (session.enrollment_end !== null) return index;
                 });
                 var enrollEndSetOption = selectOptions[enrollEndSetOptionIndex];
@@ -115,8 +115,8 @@ define([
 
             it('Currently enrolled session should be specified in the dropdown options.', function() {
                 var initialSessionId = initialSessionId,
-                    enrolledSessionIndex = entitlementAvailableSessions.find( function(session) {
-                        return initialSessionId === session.session_id;
+                    enrolledSessionIndex = _.each(entitlementAvailableSessions, function(session, index) {
+                        if (initialSessionId === session.session_id) return index;
                     });
                 expect(selectOptions[enrolledSessionIndex].text.contains('(Currently Enrolled)')).toBe(true);
             });
