@@ -8,6 +8,7 @@ from faker import Faker
 
 
 fake = Faker()
+VERIFIED_MODE = 'verified'
 
 
 def generate_instances(factory_class, count=3):
@@ -103,7 +104,7 @@ class SeatFactory(DictFactoryBase):
     currency = 'USD'
     price = factory.Faker('random_int')
     sku = factory.LazyFunction(generate_seat_sku)
-    type = 'verified'
+    type = VERIFIED_MODE
     upgrade_deadline = factory.LazyFunction(generate_zulu_datetime)
 
 
@@ -111,7 +112,7 @@ class EntitlementFactory(DictFactoryBase):
     currency = 'USD'
     price = factory.Faker('random_int')
     sku = factory.LazyFunction(generate_seat_sku)
-    mode = 'verified'
+    mode = VERIFIED_MODE
     expires = None
 
 
@@ -129,7 +130,7 @@ class CourseRunFactory(DictFactoryBase):
     start = factory.LazyFunction(generate_zulu_datetime)
     status = 'published'
     title = factory.Faker('catch_phrase')
-    type = 'verified'
+    type = VERIFIED_MODE
     uuid = factory.Faker('uuid4')
     content_language = 'en'
     max_effort = 4
