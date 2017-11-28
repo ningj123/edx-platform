@@ -74,6 +74,28 @@ def login_and_registration_form(request, initial_mode="login"):
     if request.user.is_authenticated():
         return redirect(redirect_to)
 
+    running_pipeline = pipeline.get(request)
+    if running_pipeline and initial_mode == "login":
+        current_provider = third_party_auth.provider.Registry.get_from_pipeline(running_pipeline)
+        enterprise_customer = enterprise_customer_for_request(request)
+        if enterprise_customer and current_provider.sync_learner_profile_data:
+            user_details = running_pipeline['kwargs']['details']
+
+            try:
+                qs = {'email': user_details['email']} if user_details.get('email') else \
+                    {'username': user_details.get('username')}
+                user = User.objects.get(**qs)
+            except User.DoesNotExist:
+                return redirect('register_user')
+
+            return render_to_response(
+                'student_account/enterprise_login_page.html',
+                {
+                    'disable_header': True, 'disable_footer': True, 'enterprise_customer': enterprise_customer,
+                    'user_details': user_details, 'current_user': user
+                }
+            )
+
     # Retrieve the form descriptions from the user API
     form_descriptions = _get_form_descriptions(request)
 
