@@ -58,10 +58,14 @@ class CourseEntitlement(TimeStampedModel):
 
     @property
     def expired_at_datetime(self):
-        if not self.expired_at and self.is_entitlement_redeemable():
+        if not self.expired_at and self.get_days_until_expiration() < 0:
             self.expired_at = datetime.utcnow()
             self.save()
         return self.expired_at
+
+    @expired_at_datetime.setter
+    def expired_at_datetime(self, value):
+        self.expired_at = value
 
     @property
     def policy(self):

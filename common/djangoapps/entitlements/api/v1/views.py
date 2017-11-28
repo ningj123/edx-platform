@@ -1,6 +1,6 @@
 import logging
-from datetime import datetime
 
+from django.db import transaction
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rest_framework_extensions.authentication import JwtAuthentication
@@ -32,11 +32,7 @@ class EntitlementViewSet(viewsets.ModelViewSet):
         policy and is requested via the API before returning that record.
         """
         entitlement = self.get_object()
-        # Uses expired_at directly here, it's more clear than just calling entitlement.expired_at_datetime
-        if not entitlement.expired_at:
-            if entitlement.get_days_until_expiration() < 0:
-                entitlement.expired_at = datetime.utcnow()
-                entitlement.save()
+        entitlement.expired_at_datetime  # Has an effect, updates the expired_at if it is expired
         serializer = self.get_serializer(entitlement)
         return Response(serializer.data)
 
@@ -46,10 +42,9 @@ class EntitlementViewSet(viewsets.ModelViewSet):
         policy and requested via the API before returning those records.
         """
         queryset = self.filter_queryset(self.get_queryset())
-        for entitlement in queryset:
-            if not entitlement.expired_at and entitlement.get_days_until_expiration() < 0:
-                entitlement.expired_at = datetime.utcnow()
-                entitlement.save()
+        with transaction.atomic():
+            for entitlement in queryset:
+                entitlement.expired_at_datetime  # Has an effect, updates the expired_at if it is expired
 
         page = self.paginate_queryset(queryset)
         if page is not None:
