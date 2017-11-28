@@ -1,9 +1,10 @@
 define([
     'backbone',
+    'underscore',
     'jquery',
     'js/learner_dashboard/models/course_entitlement_model',
     'js/learner_dashboard/views/course_entitlement_view'
-], function(Backbone, $, CourseEntitlementModel, CourseEntitlementView) {
+], function(Backbone, _, $, CourseEntitlementModel, CourseEntitlementView) {
     'use strict';
 
     describe('Course Entitlement View', function() {
@@ -72,19 +73,19 @@ define([
             });
 
             it('Self paced courses should have visual indication in the selection option.', function() {
-                var selfPacedOptionIndex = _.each(entitlementAvailableSessions, function(session, index) {
-                    if (session.pacing_type === 'self_paced') return index;
+                var selfPacedOptionIndex = _.findIndex(entitlementAvailableSessions, function(session) {
+                    return session.pacing_type === 'self_paced';
                 });
                 var selfPacedOption = selectOptions[selfPacedOptionIndex];
-                expect(selfPacedOption && selfPacedOption.text.includes('Self Paced')).toBe(true);
+                expect(selfPacedOption && selfPacedOption.text.includes('(Self-paced)')).toBe(true);
             });
 
-            it('Courses with an enroll-by date should indicate so on the selection option.', function() {
-                var enrollEndSetOptionIndex = _.each(entitlementAvailableSessions, function(session, index) {
-                    if (session.enrollment_end !== null) return index;
+            it('Courses with an an enroll by date should indicate so on the selection option.', function() {
+                var enrollEndSetOptionIndex = _.findIndex(entitlementAvailableSessions, function(session) {
+                    return session.enrollment_end !== null;
                 });
                 var enrollEndSetOption = selectOptions[enrollEndSetOptionIndex];
-                expect(enrollEndSetOption && enrollEndSetOption.text.includes('Enroll By') > -1).toBe(true);
+                expect(enrollEndSetOption && enrollEndSetOption.text.includes('Open until')).toBe(true);
             });
 
             it('Title element should correctly indicate the expected behavior.', function() {
@@ -110,25 +111,20 @@ define([
 
             it('Select session dropdown should allow user to leave the current session.', function() {
                 var leaveSessionOption = selectOptions[selectOptions.length - 1];
-                expect(leaveSessionOption.text.includes('Leave current session and decide later.')).toBe(true);
+                expect(leaveSessionOption.text.includes('Leave current session and decide later')).toBe(true);
             });
 
             it('Currently enrolled session should be specified in the dropdown options.', function() {
-                var initialSessionId = initialSessionId,
-                    enrolledSessionIndex = _.each(entitlementAvailableSessions, function(session, index) {
-                        if (initialSessionId === session.session_id) return index;
-                    });
-                expect(selectOptions[enrolledSessionIndex].text.contains('(Currently Enrolled)')).toBe(true);
+                var enrolledSessionIndex = _.findIndex(entitlementAvailableSessions, function(session) {
+                    return initialSessionId === session.session_id;
+                });
+                expect(selectOptions[enrolledSessionIndex].text.includes('Currently Selected')).toBe(true);
             });
 
             it('Title element should correctly indicate the expected behavior.', function() {
                 expect(view.$('.action-header').text().includes(
-                    'Change to a different session or leave all sessions.'
+                    'Change to a different session or leave current session.'
                 )).toBe(true);
-            });
-
-            it('Change session button should have the correct text.', function() {
-                expect(view.$('.enroll-btn-initial').text() === 'Change Session').toBe(true);
             });
         });
 

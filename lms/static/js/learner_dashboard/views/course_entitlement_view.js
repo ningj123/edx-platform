@@ -212,7 +212,7 @@ if (typeof RequireJS === 'undefined') {
                  },
 
                  enrollError: function() {
-                     var errorMsgEl = gettext('There was an error, please reload the page and try again.');
+                     var errorMsgEl = gettext('There was an error. Please reload the page and try again.');
                      this.$dateDisplayField
                          .find('.fa.fa-spin')
                          .removeClass('fa-spin fa-spinner')
@@ -282,15 +282,14 @@ if (typeof RequireJS === 'undefined') {
                      // Update the button popover text to enable two step authentication.
                      if (newSessionId) {
                          confirmationMsgTitle = !currentSessionId ?
-                             gettext('Are you sure that you would like to select this session?') :
-                             gettext('Are you sure that you would like to switch session?');
+                             gettext('Are you sure you want to select this session?') :
+                             gettext('Are you sure you want to change to a different session?');
                          confirmationMsgBody = !currentSessionId ? '' :
-                             gettext('Please know that by choosing to switch session you will' +
-                                 ' lose any progress you have made in this session.');
+                             gettext('Any course progress or grades from your current session will be lost.');
                      } else {
                          confirmationMsgTitle = gettext('Are you sure that you would like to leave this session?');
-                         confirmationMsgBody = gettext('Please know that by leaving you will lose any progress you ' +
-                                'had made in this session.');
+                         confirmationMsgBody = gettext('Any course progress or grades from your current session will ' +
+                                'be lost.');
                      }
 
                      // Remove existing popover and re-initialize
@@ -386,10 +385,9 @@ if (typeof RequireJS === 'undefined') {
 
                  getAvailableSessionWithId: function(sessionId) {
                      /* Returns an available session given a sessionId */
-                     var availableSession = this.entitlementModel.get('availableSessions').find(function(session) {
+                     return this.entitlementModel.get('availableSessions').find(function(session) {
                          return session.session_id === sessionId;
                      });
-                     return availableSession ? availableSession : '';
                  }
              });
          }

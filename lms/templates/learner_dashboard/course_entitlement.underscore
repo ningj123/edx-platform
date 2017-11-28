@@ -1,7 +1,7 @@
 <div id="change-session-<%-entitlementUUID%>" class="message is-shown">
     <div class="action-header">
         <% if (currentSessionId) { %>
-            <%- gettext('To change your session or leave your current session, please select from the following:')%>
+            <%- gettext('Change to a different session or leave current session.')%>
         <% } else { %>
             <%- gettext('To access the course, select a session.')%>
         <% } %>
@@ -12,15 +12,15 @@
                 <option data-session_id="<%-session.session_id%>">
                     <%-session.session_dates%>
                     <% if (session.session_id == currentSessionId) { %>
-                        <%- gettext('  - Currently Enrolled')%>
+                        <%- gettext('  - Currently Selected')%>
                     <% } else if (session.enrollment_end){ %>
-                        <%- gettext(' (Enroll by ') + session.enrollment_end + ')'%>
+                        <%- gettext(' (Open until ') + session.enrollment_end + ')'%>
                     <% } %>
                 </option>
             <% }) %>
             <option disabled><%- gettext('More sessions coming soon')%></option>
-            <% if (currentSessionId){%> <option><%- gettext('Leave current session and decide later.')%></option><%}%>
+            <% if (currentSessionId){%> <option><%- gettext('Leave current session and decide later')%></option><%}%>
         </select>
-        <button class="enroll-btn-initial"> <%- gettext('Enroll In Session') %></button>
+        <button class="enroll-btn-initial"> <%- gettext('Select Session') %></button>
     </div>
 </div>
