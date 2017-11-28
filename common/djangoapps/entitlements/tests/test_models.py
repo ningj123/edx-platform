@@ -104,4 +104,3 @@ class TestModels(TestCase):
         # This will always be 1 less than the expiration_period_days because the get_days_until_expiration
         # method will have had at least some time pass between object creation in setUp and this method execution
         assert (entitlement.get_days_until_expiration() == policy.expiration_period_days - 1)
-
