@@ -45,7 +45,7 @@ if (typeof RequireJS === 'undefined') {
                      'change .session-select': 'updateEnrollBtn',
                      'click .enroll-btn': 'handleEnrollChange',
                      'keydown .final-confirmation-btn': 'handleVerificationPopoverA11y',
-                     'click .popover-dismiss': function() { this.hideDialog($('.enroll-btn-initial')); }
+                     'click .popover-dismiss': function() { this.hideDialog(this.$('.enroll-btn-initial')); }
                  },
 
                  initialize: function(options) {
@@ -93,7 +93,7 @@ if (typeof RequireJS === 'undefined') {
 
                      // Ensure that focus moves to the popover on click of the initial change enrollment button.
                      $(document).on('click', '.enroll-btn-initial', function() {
-                         this.showDialog($('.enroll-btn-initial'));
+                         this.showDialog(this.$('.enroll-btn-initial'));
                          this.$('.final-confirmation-btn:first').focus();
                      }.bind(this));
                  },
@@ -218,7 +218,7 @@ if (typeof RequireJS === 'undefined') {
                          .removeClass('fa-spin fa-spinner')
                          .addClass('fa-close');
                      this.$dateDisplayField.append(errorMsgEl);
-                     this.hideDialog($('.enroll-btn-initial'));
+                     this.hideDialog(this.$('.enroll-btn-initial'));
                  },
 
                  updateEnrollBtn: function() {
@@ -248,9 +248,9 @@ if (typeof RequireJS === 'undefined') {
                      } else {
                          enrollText = gettext('Leave Current Session');
                      }
-                     this.$('.enroll-btn-initial').text(enrollText);
-                     this.removeDialog($('.enroll-btn-initial'));
-                     this.initializeVerificationDialog($('.enroll-btn-initial'));
+                     enrollBtnInitial.text(enrollText);
+                     this.removeDialog(enrollBtnInitial);
+                     this.initializeVerificationDialog(enrollBtnInitial);
                  },
 
                  toggleSessionSelectionPanel: function() {
