@@ -507,9 +507,10 @@ class ProgramDataExtender(object):
         Extend the program data with data about learner's eligibility for one click purchase,
         discount data of the program and SKUs of seats that should be added to basket.
         """
-        applicable_seat_types = set(seat for seat in self.data['applicable_seat_types'] if seat != 'credit')
-        if 'professional' in applicable_seat_types:
+        if 'professional' in self.data['applicable_seat_types']:
             self.data['applicable_seat_types'].append('no-id-professional')
+        applicable_seat_types = set(seat for seat in self.data['applicable_seat_types'] if seat != 'credit')
+
         is_learner_eligible_for_one_click_purchase = self.data['is_program_eligible_for_one_click_purchase']
         skus = []
         bundle_variant = 'full'

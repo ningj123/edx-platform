@@ -541,7 +541,9 @@ class TestProgramProgressMeter(TestCase):
         Verify that the method can find course run certificates when not mocked out.
         """
         mock_get_certificates_for_user.return_value = [
-            self._make_certificate_result(status='downloadable', type=CourseMode.VERIFIED, course_key='downloadable-course'),
+            self._make_certificate_result(
+                status='downloadable', type=CourseMode.VERIFIED, course_key='downloadable-course'
+            ),
             self._make_certificate_result(status='generating', type='honor', course_key='generating-course'),
             self._make_certificate_result(status='unknown', course_key='unknown-course'),
         ]
@@ -575,7 +577,9 @@ class TestProgramProgressMeter(TestCase):
         # Grant a 'no-id-professional' certificate for one of the course runs,
         # thereby completing the program.
         mock_get_certificates_for_user.return_value = [
-            self._make_certificate_result(status='downloadable', type=CourseMode.NO_ID_PROFESSIONAL_MODE, course_key=course_runs[0]['key'])
+            self._make_certificate_result(
+                status='downloadable', type=CourseMode.NO_ID_PROFESSIONAL_MODE, course_key=course_runs[0]['key']
+            )
         ]
 
         # Verify that the program is complete.
@@ -923,12 +927,13 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         This test is primarily for the case of no-id-professional enrollment modes
         """
         course1 = _create_course(self, self.course_price)
-        CourseEnrollmentFactory(user=self.user, course_id=course1['course_runs'][0]['key'], mode=CourseMode.NO_ID_PROFESSIONAL_MODE)
+        CourseEnrollmentFactory(
+            user=self.user, course_id=course1['course_runs'][0]['key'], mode=CourseMode.NO_ID_PROFESSIONAL_MODE
+        )
         program2 = ProgramFactory(
             courses=[course1],
             is_program_eligible_for_one_click_purchase=True,
-            applicable_seat_types=[CourseMode.PROFESSIONAL],  # There is no seat type for no-id-professional, it
-                                                     # instead uses professional
+            applicable_seat_types=[CourseMode.PROFESSIONAL]
         )
         data = ProgramDataExtender(program2, self.user).extend()
         self.assertFalse(data['is_learner_eligible_for_one_click_purchase'])
@@ -1082,6 +1087,7 @@ class TestProgramDataExtender(ModuleStoreTestCase):
         Learner should be eligible for one click purchase if 'professional' is an applicable seat type
         a remaining unpurchased course has a 'no-id-professional' entitlement.
         """
+        from pdb import set_trace; set_trace()
         course1 = _create_course(self, self.course_price, make_entitlement=True)
         course2 = _create_course(self, self.course_price)
         course2['entitlements'].append(EntitlementFactory(mode=CourseMode.NO_ID_PROFESSIONAL_MODE))
