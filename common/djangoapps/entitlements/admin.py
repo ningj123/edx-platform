@@ -1,11 +1,10 @@
 from django.contrib import admin
 
-from .models import CourseEntitlement
-from .models import CourseEntitlementPolicy
+from .models import CourseEntitlement, CourseEntitlementPolicy
 
 
 @admin.register(CourseEntitlement)
-class EntitlementAdmin(admin.ModelAdmin):
+class CourseEntitlementAdmin(admin.ModelAdmin):
     list_display = ('user',
                     'uuid',
                     'course_uuid',
@@ -18,7 +17,7 @@ class EntitlementAdmin(admin.ModelAdmin):
 
 
 @admin.register(CourseEntitlementPolicy)
-class EntitlementPolicyAdmin(admin.ModelAdmin):
+class CourseEntitlementPolicyAdmin(admin.ModelAdmin):
     list_display = ('expiration_period_days',
                     'refund_period_days',
                     'regain_period_days',
