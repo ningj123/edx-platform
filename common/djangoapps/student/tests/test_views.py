@@ -347,6 +347,9 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin):
         """
         CourseEntitlementFactory(user=self.user)
         response = self.client.get(self.path)
+        # self.assertIn(, response.content)
+        self.assertIn('In order to view the course you must select a session:', response.content)
+        # self.assertIn(, response.content)
 
     def test_fulfilled_entitlement(self):
         """
@@ -360,3 +363,9 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin):
         enrollment = CourseEnrollmentFactory(user=self.user, course_id=course.course_runs[0].key)
         CourseEntitlementFactory(user=self.user, course_uuid=course.uuid, enrollment_course_run=enrollment)
         response = self.client.get(self.path)
+        # self.assertIn(, response.content)
+        # self.assertNotIn(, response.content)
+        self.assertIn(
+            'To change your session or leave your current session, please select from the following', response.content
+        )
+        # self.assertNotIn(, response.content)
