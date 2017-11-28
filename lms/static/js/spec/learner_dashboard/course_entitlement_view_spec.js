@@ -13,10 +13,6 @@ define([
             initialSessionId = '',
             testSessionIds = ['test_session_id_1', 'test_session_id_2'];
 
-        beforeEach(function() {
-            // continue;
-        });
-
         setupView = function(isAlreadyEnrolled) {
             var entitlementAvailableSessions;
 
@@ -38,7 +34,7 @@ define([
             }];
 
             view = new CourseEntitlementView({
-                el: '#course-card-0 .course-entitlement-selection-container',
+                el: '<div class="course-entitlement-selection-container"></div>',
                 triggerOpenBtn: '#course-card-0 .change-session',
                 courseCardMessages: '#course-card-0 .messages-list > .message',
                 courseTitleLink: '#course-card-0 .course-title a',
@@ -60,29 +56,32 @@ define([
 
         describe('Visibility and initialization of view', function() {
             it('Should create a entitlement view element', function() {
-                // setupView(false);
-                // expect(view.el).toHaveClass('course-entitlement-selection-container');
+                setupView(false);
+                expect(view).toBeDefined();
             });
 
             it('Select session container should be visible when user has not yet selected a session.', function() {
                 setupView(false);
-                view.render();
                 expect(view.$el.hasClass('hidden')).toBe(false);
             });
 
-            it('Select session container should be hidden when user selected a session.', function() {
-                // TODO: Implement this
-                expect(true === false);
+            it('Select session container should be hidden when is already enrolled in a session.', function() {
+                setupView(true);
+                expect(view.$el.hasClass('hidden')).toBe(true);
             });
         });
 
         describe('Available Sessions Select', function() {
-            it('Select sessino dropdown should show all available course runs and a coming soon option.', function() {
+            beforeEach(function() {
+                setupView(true);
+            });
+
+            it('Select session dropdown should show all available course runs and a coming soon option.', function() {
                 // TODO: Implement this
             });
 
             it('Self paced courses should have visual indication in the selection option.', function() {
-                // TODO: Implement thisentitlement
+                // TODO: Implement this
             });
 
             it('Courses with an enroll-by date should indicate so on the selection option.', function() {

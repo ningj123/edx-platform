@@ -3,7 +3,7 @@
 // from the karma configuration. The next version of bootstrap (>v4.2) will solve this issue.
 // Once this is resolved, we should import bootstrap through require-config.js and main.js (for jasmine testing)
 var Popper;
-if (typeof RequireJS === "undefined") {
+if (typeof RequireJS === 'undefined') {
     Popper = require(['common/js/vendor/popper']);  // eslint-disable-line global-require
     require(['common/js/vendor/bootstrap']);  // eslint-disable-line global-require
 } else {
