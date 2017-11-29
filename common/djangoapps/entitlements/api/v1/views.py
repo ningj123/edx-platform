@@ -7,6 +7,9 @@ from opaque_keys.edx.keys import CourseKey
 from rest_framework import permissions, viewsets, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
+from student.models import CourseEnrollmentException
+# from enrollment.errors import CourseEnrollmentError, CourseEnrollmentExistsError, CourseModeNotFoundError
+# from openedx.core.lib.exceptions import CourseNotFoundError
 
 from entitlements.api.v1.filters import CourseEntitlementFilter
 from entitlements.api.v1.serializers import CourseEntitlementSerializer
@@ -62,12 +65,36 @@ class EntitlementEnrollmentViewSet(viewsets.GenericViewSet):
     queryset = CourseEntitlement.objects.all()
     serializer_class = CourseEntitlementSerializer
 
+    def _verify_course_run_for_entitlement(self, entitlement, course_session_id):
+        course_run_valid = False
+        course_runs = get_course_runs_for_course(entitlement.course_uuid)
+        for run in course_runs:
+            if course_session_id == run.get('key', ''):
+                course_run_valid = True
+                break
+        return course_run_valid
+
     def _enroll_entitlement(self, entitlement, course_session_key, user):
-        enrollment = CourseEnrollment.enroll(
-            user=user,
-            course_key=course_session_key,
-            mode=entitlement.mode,
-        )
+        try:
+            enrollment = CourseEnrollment.enroll(
+                user=user,
+                course_key=course_session_key,
+                mode=entitlement.mode,
+            )
+        except CourseEnrollmentException:
+            message = (
+                'Course Entitlement Enroll for {username} failed for course: {course_id}, '
+                'mode: {mode}, and entitlement: {entitlement}'
+            ).format(
+                username=user.username,
+                course_id=course_session_key,
+                mode=entitlement.mode,
+                entitlement=entitlement.uuid
+            )
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={'message': message}
+            )
 
         CourseEntitlement.set_enrollment(entitlement, enrollment)
 
@@ -94,37 +121,42 @@ class EntitlementEnrollmentViewSet(viewsets.GenericViewSet):
             )
 
         # Verify the course run ID is of the same type as the Course entitlement.
-        course_run_valid = False
-        course_runs = get_course_runs_for_course(entitlement.course_uuid)
-        for run in course_runs:
-            if course_session_id == run.get('key', ''):
-                course_run_valid = True
-
+        course_run_valid = self._verify_course_run_for_entitlement(entitlement, course_session_id)
         if not course_run_valid:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
-                data="The Course Run ID is not a match for this Course Entitlement."
+                data={
+                    'message': "The Course Run ID is not a match for this Course Entitlement."
+                }
             )
 
         # Determine if this is a Switch session or a simple enroll and handle both.
+        try:
+            course_run_string = CourseKey.from_string(course_session_id)
+        except CourseKey.InvalidKeyError:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    'message': u"Invalid '{course_id}'".format(course_id=course_session_id)
+                }
+            )
         if entitlement.enrollment_course_run is None:
             self._enroll_entitlement(
                 entitlement=entitlement,
-                course_session_key=CourseKey.from_string(course_session_id),
+                course_session_key=course_run_string,
                 user=request.user
             )
-        else:
-            if entitlement.enrollment_course_run.course_id != course_session_id:
-                self._unenroll_entitlement(
-                    entitlement=entitlement,
-                    course_session_key=entitlement.enrollment_course_run.course_id,
-                    user=request.user
-                )
-                self._enroll_entitlement(
-                    entitlement=entitlement,
-                    course_session_key=CourseKey.from_string(course_session_id),
-                    user=request.user
-                )
+        elif entitlement.enrollment_course_run.course_id != course_session_id:
+            self._unenroll_entitlement(
+                entitlement=entitlement,
+                course_session_key=entitlement.enrollment_course_run.course_id,
+                user=request.user
+            )
+            self._enroll_entitlement(
+                entitlement=entitlement,
+                course_session_key=course_run_string,
+                user=request.user
+            )
 
         return Response(
             status=status.HTTP_201_CREATED,
@@ -148,7 +180,7 @@ class EntitlementEnrollmentViewSet(viewsets.GenericViewSet):
             )
 
         if entitlement.enrollment_course_run is None:
-            return Response()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         self._unenroll_entitlement(
             entitlement=entitlement,
