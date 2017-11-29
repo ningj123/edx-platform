@@ -323,8 +323,8 @@ class SequenceModule(SequenceFields, ProctoringFields, XModule):
         return fragment
 
     def _get_gating_milestone(self):
-            """
-        Checks whether the content is gated for learners.
+        """
+        Checks whether a gating milestone exists for this Section
         """
         gating_service = self.runtime.service(self, 'gating')
         if gating_service:
